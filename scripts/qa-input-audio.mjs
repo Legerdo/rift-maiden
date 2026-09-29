@@ -1,0 +1,20 @@
+// Quick check: input taps register and the audio engine boots.
+import { chromium } from 'playwright-core';
+const browser = await chromium.launch({ channel: 'msedge', headless: true, args: ['--autoplay-policy=no-user-gesture-required'] });
+const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
+page.on('pageerror', (e) => console.log('ERR', e.message));
+await page.goto('http://localhost:5173/?qa=1');
+await page.waitForTimeout(2500);
+await page.mouse.click(480, 270);
+await page.waitForTimeout(600);
+console.log('audio', await page.evaluate(() => ({ state: window.__audio.ctx?.state, buffers: window.__audio.buffers?.size, song: window.__audio.music?.currentSong })));
+await page.keyboard.press('Enter');
+await page.waitForTimeout(2500);
+const st = () => page.evaluate(() => { const g = window.__game.scene.getScene('Game'); return { cd: g.skills.cd.map((v) => +v.toFixed(2)), dash: g.player.dashCharges, song: window.__audio.music?.currentSong }; });
+console.log('before', await st());
+await page.keyboard.press('q');
+await page.waitForTimeout(100);
+await page.keyboard.press('Shift');
+await page.waitForTimeout(100);
+console.log('after taps', await st());
+await browser.close();
